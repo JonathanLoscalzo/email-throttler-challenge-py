@@ -1,11 +1,22 @@
 
 version: "3.9"
 
+x-common-variables: &common-variables
+  platform: linux/arm64/v8
+  environment:
+    - RABBITMQ_USER=user
+    - RABBITMQ_PASS=password
+    - RABBITMQ_HOST=rabbitmq
+    - RABBITMQ_PORT=5672
+  build:
+    context: .
+    dockerfile: ./docker/api.dockerfile
+
 services:
   rabbitmq:
     platform: linux/arm64/v8
     environment:
-      - RABBITMQ_DEFAULT_USER=user 
+      - RABBITMQ_DEFAULT_USER=user
       - RABBITMQ_DEFAULT_PASS=password
     image: rabbitmq:3-management-alpine
     container_name: rabbitmq
@@ -14,6 +25,23 @@ services:
       - 15672:15672
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+  api:
+    <<: *common-variables
+    ports:
+      - 3000:80
+    depends_on:
+      - rabbitmq
+  consumer:
+    <<: *common-variables
+    command: email-throttle-cli consumer
+    scale: 2
+    restart: on-failure
+    depends_on:
+      rabbitmq:
+        condition: service_started
+        restart: true
+      api:
+        condition: service_started
 
 
 volumes:

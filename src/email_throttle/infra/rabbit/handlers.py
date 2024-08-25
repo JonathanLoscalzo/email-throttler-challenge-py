@@ -1,14 +1,23 @@
-import pika
+import os
 from typing import Callable
+
+import pika
 from pika.channel import Channel
 
 
 def create_connection():
+    # TODO: add it to a config file or config class
+    host = os.getenv("RABBITMQ_HOST", "localhost")
+    port = int(os.getenv("RABBITMQ_PORT", "5672"))
+    user = os.getenv("RABBITMQ_USER", "user")
+    password = os.getenv("RABBITMQ_PASSWORD", "password")
+
+    print(host, port, user, password)
     connection = pika.BlockingConnection(
         pika.ConnectionParameters(
-            "localhost",
-            port=5672,
-            credentials=pika.PlainCredentials("user", "password"),
+            host,
+            port=port,
+            credentials=pika.PlainCredentials(user, password),
         )
     )
 
