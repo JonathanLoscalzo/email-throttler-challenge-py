@@ -155,19 +155,16 @@ Current Architecture:
 - with the bulk email sender, it sends the email to a queue and then processes with the consumers
 
 #### Alternatives to consider:
-Single-process
-==============
+##### Single-process
 - **Description**: A single process manages all services, receiving all the emails and sending it. The case of the CLI is an example of this case.
 
-Multi-process with Shared Variables
-===================================
+##### Multi-process with Shared Variables
   - **Description**: Utilizes variable sharing tools and concurrency.
   - **Considerations**:
     - Complexity arises when trying to scale for independent microservices.
     - Working with multiprocess is more complex than working with a single process.
 
-Microservices
-===================================
+##### Microservices
 - **Description**: Combines single and multi-process architectures, where containers may be single or multi-process. One container may have one or multi process to handle the email requests and sendings. The sharing memory is being done with redis.
 
 
