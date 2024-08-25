@@ -1,0 +1,19 @@
+{
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "[python]": {
+        "diffEditor.ignoreTrimWhitespace": false,
+        "gitlens.codeLens.symbolScopes": [
+            "!Module"
+        ],
+        "editor.formatOnType": true,
+        "editor.wordBasedSuggestions": "off",
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true,
+    },
+    "flake8.path": [
+        "python",
+        "-m",
+        "pflake8"
+    ],
+}

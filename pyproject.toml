@@ -1,0 +1,41 @@
+
+[build-system]
+requires = ["setuptools", "wheel", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "email_throttle"
+dynamic = ["version", "dependencies"]
+authors = [{ name = "Jonathan loscalzo" }]
+description = "A brief description of your email sender package"
+readme = "README.md"
+requires-python = ">=3.12"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[tool.setuptools.dynamic]
+# https://stackoverflow.com/a/73600610
+dependencies = { file = ["requirements.txt"] }
+
+[project.scripts]
+email-throttle-cli = "email_throttle.cli.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+
+[tool.pytest.ini_options]
+# addopts = "--cov-report xml:coverage.xml --cov src --cov-fail-under 0 --cov-append -m 'not integration'"
+addopts = "--cov=src --cov-fail-under=55" # to debug, comment this line
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.black]
+line-length = 120
+
+[tool.flake8]
+# extend-ignore = E203, E704, E501
+max-line-length = 120

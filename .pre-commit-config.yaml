@@ -1,0 +1,37 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.2.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+-   repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+-   repo: https://github.com/psf/black
+    rev: 24.8.0
+    hooks:
+    -   id: black
+- repo: local
+  hooks:
+  - id: isort
+    name: isort
+    entry: isort
+    language: system
+    types: [python]
+  - id: pytest
+    name: pytest
+    entry: .venv/bin/pytest tests
+    language: system
+    types: [python]
+    pass_filenames: false
+    always_run: true
+  - id: bandit
+    name: bandit
+    description: 'Bandit is a tool for finding common security issues in Python code'
+    entry: bandit
+    language: python
+    language_version: python3
+    types: [python]
+    require_serial: true
