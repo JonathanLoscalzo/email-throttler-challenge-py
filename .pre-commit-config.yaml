@@ -5,21 +5,16 @@ repos:
     -   id: trailing-whitespace
     -   id: end-of-file-fixer
     -   id: check-yaml
--   repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
 -   repo: https://github.com/psf/black
     rev: 24.8.0
     hooks:
     -   id: black
+-   repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
 - repo: local
   hooks:
-  - id: isort
-    name: isort
-    entry: isort
-    language: system
-    types: [python]
   - id: pytest
     name: pytest
     entry: .venv/bin/pytest tests
@@ -35,3 +30,4 @@ repos:
     language_version: python3
     types: [python]
     require_serial: true
+    args: ["-c", "pyproject.toml"]

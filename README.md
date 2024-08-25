@@ -1,17 +1,55 @@
 # Challenge: Email Throttle
 
 ## 1. Introduction
-## Challenge
+### Challenge
 Create a service that accepts the necessary information and sends emails. It
 should provide an abstraction between two different email service providers.
 If one of the services goes down, your service can quickly failover to
 a different provider without affecting your customers. More information go to [REVIEW](./REVIEW.md).
 
-## Overview
+### Overview
 This project is a system consisting of a back-end API, an email throttle service, and a minimal front-end, designed to demonstrate a clean and maintainable client/service architecture. The back-end exposes a RESTful JSON API, and the front-end is a [nothing at the moment]<!--single-page application with a simple `index.html` that links to the necessary JS/CSS files.-->
 
 ### Objective
 The goal of this project is to provide a production-ready codebase that clearly demonstrates good engineering practices, including a clean separation between the front-end and back-end, high code quality, and proper testing. The project aims to showcase the chosen technologies and frameworks, with an emphasis on clarity, correctness, and maintainability.
+
+### Features
+- API
+  - FastAPI
+  - Swagger integration
+  - in the container is using uvicorn
+- CLI
+  - argparser
+- Core
+  - middleware implementation (for retry, circuit breaker and rate limiter)
+  - logging
+- Local Deployment
+  - rabbitmq + docker-composes
+- Testing
+  - unit tests with pytest
+  - coverage with pytest-cov
+- Development Environment
+  - vscode
+  - docker
+  - pre-commit
+    - formatter: flake8+black, isort
+    - security: bandit
+  - virtual env: pyenv
+  - python version: 3.12.2
+  - direnv (not required)
+
+**NOT DONE YET**
+- CI/CD
+- Production Deployment
+- Authentication and Authorization
+- Monitoring and Alerting
+- Documentation
+- Email Vendors
+- Better implementation of Rabbit Consumer and Producer
+  - Middleware for serialize and deserealize
+  - entities (aka dto's|entities|protobuf|...) for serialization and deserialization (EmailDTO is being used, but it is not its purpose!)
+- Better implementation of Middlewares
+  - using redis to save shared variables
 
 ### Technical stack
 #### **Back-end**: The back-end is divided into three main components:
@@ -46,11 +84,18 @@ In this sense, it seems more efficient to keep the architecture separated into A
 It's worth noting that using a queue requires creating a Dead Letter Queue for failed emails, so they can be retried and configured accordingly, but it seems like the most scalable and hassle-free solution.
 
 **Current Implementation**
-complete
+The API offers two endpoints:
+- POST /email
+  - Send a single email using a fake sender
 
+- POST /email/bulk
+  - send multiples emails using a queue acting as a throttler
+  - a default consumer is handling the messages.
 
 **CLI**
 
+- Simulator
+Command: `email-throttle-core-cli simulate ...`
 The execution flow is:
 ```CLI -> Simulator -> Create Required Configuration -> Execute the Sender```
 
@@ -60,6 +105,12 @@ The main difference is with EmailFailoverWithState will keep track of the usage 
 With EmailFailover, it will always try to send an email using the first available service, and if all the services failed, it will return an error. The approach with
 state never fails, so this approach could be called "eventually sended". Both have drawbacks that could be solved in future cycles.
 
+- Consumer
+Command: `email-throttle-core-cli consume ...`
+
+This command creates a consumer that will be listening for messages in the queue and will send them using the configured services.
+It is using a default configuration, for future implementations it will be possible to configure it with real services and configurations, similar than the simulate command.
+(At the moment is using some methods from the simulate endpoint)
 
 
 #### **Front-end**: The front-end is a [nothing at the moment]<!--a single-page application with a simple `index.html` that links to the necessary JS/CSS files. -->
@@ -99,31 +150,26 @@ state never fails, so this approach could be called "eventually sended". Both ha
 
 ### System Design
 
-#### Single-process
+Current Architecture:
+- with the single email sender, it sends the email directly
+- with the bulk email sender, it sends the email to a queue and then processes with the consumers
+
+#### Alternatives to consider:
+Single-process
+==============
 - **Description**: A single process manages all services, receiving all the emails and sending it. The case of the CLI is an example of this case.
 
-##### Multi-process with Shared Variables
+Multi-process with Shared Variables
+===================================
   - **Description**: Utilizes variable sharing tools and concurrency.
   - **Considerations**:
     - Complexity arises when trying to scale for independent microservices.
     - Working with multiprocess is more complex than working with a single process.
 
-#### Microservices
+Microservices
+===================================
 - **Description**: Combines single and multi-process architectures, where containers may be single or multi-process. One container may have one or multi process to handle the email requests and sendings. The sharing memory is being done with redis.
 
-<!--
-## 3. Implementation Details
-- **Interfaces and Contracts**: Consideraciones sobre APIs, colas de mensajes, CLI, etc.
-- **Error Handling and Metrics**: Estrategias para el manejo de errores, emisión de métricas y monitoreo.
-- **Testing**:
-  - **Unit Tests**: Cobertura de pruebas unitarias.
-  - **Integration Tests**: Verificación de interacción entre componentes.
-  - **Acceptance Tests**: Validación de requisitos.
-  - **Load Testing**: Evaluación bajo carga alta.
-- **Logging**: Estrategias para registrar eventos y errores.
-- **Authentication**: Métodos de autenticación considerados.
-- **Configuration**: Gestión de configuraciones específicas de los servicios de email.
-- **Multi-Tenancy**: Manejo de múltiples tenants y sus configuraciones. -->
 
 ## 4. Usage
 
@@ -147,37 +193,67 @@ Running CLI
 email-throttle-cli simulate -h
 email-throttle-cli simulate \
     --email-count 30 --vendor-count 1 \
-    --vendors vendor3 --middlewares retry,rl  \
+    --vendors vendor --middlewares retry,rl  \
     --retries 10 --rate-limiters 5,10
 ```
 
 Running Tests (with coverage)
 ```bash
+# it shows the coverage over the src code through the pytest-cov module
 pytest
 ```
 
 Running with Containers
 ```bash
+# create the containers
+docker-compose up -d
+
+# invoke
+for i in {1..100}; do
+curl -X 'POST' \
+    'http://127.0.0.1:3000/email/bulk' \
+    -H 'accept: application/json' \
+    -H 'Content-Type: application/json' \
+    -d '[
+    {
+        "subject": "string",
+        "body": "string",
+        "to": [
+            "string"
+        ],
+        "from_email": "string"
+    },
+    {
+        "subject": "string",
+        "body": "string",
+        "to": [
+            "string"
+        ],
+        "from_email": "string"
+    }]'
+done
+
+# take a look into logs within containers
+
 ```
 
 Running Backend
 ```bash
+fastapi dev src/email_throttle/api/main.py --port 3000
 ```
 
-
-Running Frontend
-```
-```
-<!-- - **Configuration**: Instrucciones para configurar el sistema. -->
+#### Running Swagger
+- Start the containers or run the backend
+- go to http://127.0.0.1:3000/docs
 
 
-## 6. Logging, Monitoring and Alerting
+<!-- ## 6. Logging, Monitoring and Alerting
 - **Logging**: Using default logger with [Loguru](https://github.com/Delgan/loguru).
- - **Metrics Collection**: <!-- Cómo se recopilan las métricas. -->
-- **Alerting**: <!-- Estrategias para alertar sobre fallos o problemas.-->
+- **Metrics Collection**:
+- **Alerting**:  -->
 
 
-## Features
+<!-- ## Features
 - [ ] Backend
     - [ ] CLI
     - [ ] API
@@ -197,4 +273,4 @@ Running Frontend
 - [ ] Observability
     - [ ] Logging
     - [ ] Metrics
-    - [ ] Monitoring
+    - [ ] Monitoring -->
