@@ -21,11 +21,11 @@ jobs:
     - name: Test with pytest
       run: |
         pip install pytest pytest-cov
-        pytest tests.py --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
+        pytest --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
     - name: Upload pytest test results
       uses: actions/upload-artifact@v4
-      with:
-        name: pytest-results-${{ matrix.python-version }}
-        path: junit/test-results-${{ matrix.python-version }}.xml
+      # with:
+      #   name: pytest-results-${{ matrix.python-version }}
+      #   path: junit/test-results-${{ matrix.python-version }}.xml
       # Use always() to always run this step to publish test results when there are test failures
       if: ${{ always() }}
